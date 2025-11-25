@@ -1,32 +1,25 @@
 const express = require('express');
-// FIX: Use the correct package name 'ws' instead of 'wss'
 const { WebSocketServer } = require('ws'); 
 const path = require('path');
 const fs = require('fs'); 
 
 const app = express();
-// FIX: Use process.env.PORT for Render deployment
 const PORT = process.env.PORT || 3000;
 const BANS_FILE = 'bans.json'; 
 
-// FIX: Use simple path 'public' for static files
 app.use(express.static('public')); 
 
-// Start the HTTP server
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// Initialize WebSocket Server on the same HTTP server
 const wsss = new WebSocketServer({ server });
-const clients = new Map(); // Maps WebSocket connections to nicknames
+const clients = new Map(); 
 const mutedUsers = new Set(); 
 let bannedUsers = new Map(); 
 let isChatFrozen = false; 
 
-// List of prohibited words for auto-banning
 const badWords = ["stupid","idiot","dumb","fuck","bitch","motherfucker","mf","dick","pussy","nigger"];
 
-// --- PERSISTENCE FUNCTIONS (Handles reading/writing bans.json) ---
-
+// --- PERSISTENCE FUNCTIONS ---
 function loadBans() {
     try {
         if (fs.existsSync(BANS_FILE)) {
@@ -134,7 +127,9 @@ wsss.on('connection', wss => {
             clients.set(wss, newNick);
             broadcastUsers();
             if (oldNick === null) {
-                broadcastChat("SYSTEM", `${newNick} has joined the chat.`);
+                // FIX: Check for the admin nickname and display 'ADMIN' instead of 'nimda'
+                const displayNick = newNick.toLowerCase() === 'nimda' ? 'ADMIN' : newNick;
+                broadcastChat("SYSTEM", `${displayNick} has joined the chat.`); 
             }
             return;
         }
@@ -280,8 +275,10 @@ wsss.on('connection', wss => {
         const closedNick = clients.get(wss);
         clients.delete(wss);
         if (closedNick) {
-             broadcastChat("SYSTEM", `${closedNick} has left the chat.`);
-             mutedUsers.delete(closedNick.toLowerCase()); 
+            // FIX: Display ADMIN when the admin user leaves
+            const displayNick = closedNick.toLowerCase() === 'nimda' ? 'ADMIN' : closedNick;
+            broadcastChat("SYSTEM", `${displayNick} has left the chat.`);
+            mutedUsers.delete(closedNick.toLowerCase()); 
         }
         broadcastUsers();
     });
