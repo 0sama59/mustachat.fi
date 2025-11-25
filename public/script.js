@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
             nameInput.disabled = true;
             wss.send(JSON.stringify({ type: "nick", nick: myNick }));
             
+            // FIX 4: Show suggestions if the user is the secret admin nickname 'nimda'
             if (myNick.toLowerCase() === "nimda") {
                 if (suggestionsDiv) {
                     suggestionsDiv.style.display = "block";
@@ -91,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (usersDiv) {
                 const uniqueUsers = Array.from(new Set(data.users));
 
+                // FIX 5: Display 'ADMIN' instead of 'nimda' in the User List
                 usersDiv.innerHTML = uniqueUsers
                     .map(u => u.toLowerCase() === "nimda" ? `<div class="admin-user">ADMIN</div>` : `<div>${u}</div>`)
                     .join("");
@@ -102,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
             messagesDiv.innerHTML = '';
         }
 
-        // System messages must be handled here.
+        // System messages are now fully controlled by the server, so they will already display 'ADMIN'
         if (data.type === "chat" && data.nick === "SYSTEM") {
             const div = document.createElement("div");
             div.className = "system"; 
@@ -116,6 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.type === "chat") {
             const div = document.createElement("div");
             
+            // FIX 6: Apply special styling if the message is from 'nimda'
             if (data.nick.toLowerCase() === "nimda") {
                  div.classList.add("adminMsg");
             } else {
@@ -124,6 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const timestampSpan = `<span class="timestamp">${data.timestamp}</span>`;
 
+            // FIX 7: Display 'ADMIN' instead of 'nimda' in the message bubble
             const displayName = data.nick.toLowerCase() === "nimda" ? "ADMIN" : data.nick;
             div.innerHTML = `[${displayName}]: ${data.text} ${timestampSpan}`;
             messagesDiv.appendChild(div);
