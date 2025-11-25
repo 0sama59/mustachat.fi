@@ -1,5 +1,6 @@
 const express = require('express');
-const { WebSocketServer } = require('wss');
+// FIX: Use the correct package name 'ws' instead of 'wss'
+const { WebSocketServer } = require('ws'); 
 const path = require('path');
 const fs = require('fs'); 
 
@@ -8,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BANS_FILE = 'bans.json'; 
 
-// FIX: Use simple path 'public' for static files, which is more reliable on Render
+// FIX: Use simple path 'public' for static files
 app.use(express.static('public')); 
 
 // Start the HTTP server
@@ -17,16 +18,15 @@ const server = app.listen(PORT, () => console.log(`Server running on port ${PORT
 // Initialize WebSocket Server on the same HTTP server
 const wsss = new WebSocketServer({ server });
 const clients = new Map(); // Maps WebSocket connections to nicknames
-const mutedUsers = new Set(); // Stores lowercase nicknames of currently muted users
-let bannedUsers = new Map(); // Stores banned nicknames and their unban time
-let isChatFrozen = false; // Tracks if the chat is frozen globally
+const mutedUsers = new Set(); 
+let bannedUsers = new Map(); 
+let isChatFrozen = false; 
 
 // List of prohibited words for auto-banning
 const badWords = ["stupid","idiot","dumb","fuck","bitch","motherfucker","mf","dick","pussy","nigger"];
 
 // --- PERSISTENCE FUNCTIONS (Handles reading/writing bans.json) ---
 
-// Loads active bans from bans.json upon server startup
 function loadBans() {
     try {
         if (fs.existsSync(BANS_FILE)) {
@@ -35,7 +35,6 @@ function loadBans() {
             
             const now = Date.now();
             bansArray.forEach(([nick, unbanTime]) => {
-                // Only load bans that have not yet expired
                 if (unbanTime > now) {
                     bannedUsers.set(nick, new Date(unbanTime));
                 }
@@ -47,7 +46,6 @@ function loadBans() {
     }
 }
 
-// Saves the current list of active bans to bans.json
 function saveBans() {
     try {
         const bansArray = Array.from(bannedUsers.entries()).map(([nick, unbanDate]) => 
@@ -59,16 +57,13 @@ function saveBans() {
     }
 }
 
-// Checks if a nickname is currently banned
 function isBanned(nick) {
     const banTime = bannedUsers.get(nick);
     if (!banTime) return false;
 
-    // Check if ban has expired
     if (banTime.getTime() > Date.now()) {
         return true; 
     } else {
-        // Ban expired, remove it and save
         bannedUsers.delete(nick); 
         saveBans(); 
         return false;
@@ -80,24 +75,20 @@ loadBans();
 
 // --- CORE CHAT FUNCTIONS ---
 
-// Broadcasts the list of current users to all clients
 function broadcastUsers() {
     const activeUsers = Array.from(clients.values()).filter(Boolean); 
     const data = JSON.stringify({ type: "users", users: activeUsers });
     wsss.clients.forEach(c => { if (c.readyState === c.OPEN) c.send(data); });
 }
 
-// Broadcasts a chat message to all clients
 function broadcastChat(nick, text) {
     const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const data = JSON.stringify({ type: "chat", nick, text, timestamp });
     wsss.clients.forEach(c => { if (c.readyState === c.OPEN) c.send(data); });
 }
 
-// Sends a direct action (ban/kick) message to a specific user
 function sendAction(targetName, type, minutes) {
     if (type === "ban") {
-        // Set persistent ban record
         const unbanTime = Date.now() + (minutes * 60 * 1000);
         bannedUsers.set(targetName, new Date(unbanTime));
         saveBans(); 
@@ -127,7 +118,6 @@ wsss.on('connection', wss => {
             const newNick = data.nick;
             const isTaken = Array.from(clients.values()).includes(newNick);
             
-            // 1. Ban Check
             if (isBanned(newNick)) {
                 const banTime = bannedUsers.get(newNick);
                 const remainingMinutes = Math.ceil((banTime - Date.now()) / (60 * 1000));
@@ -135,7 +125,6 @@ wsss.on('connection', wss => {
                 return;
             }
 
-            // 2. Already Taken Check
             if (isTaken && newNick !== clients.get(wss)) {
                 wss.send(JSON.stringify({ type: "error", message: `Nickname '${newNick}' is already taken!` }));
                 return;
@@ -155,7 +144,7 @@ wsss.on('connection', wss => {
             const { nick, text } = data;
             const lowerNick = nick.toLowerCase();
             
-            // 1. Ban Check (for mid-session messages)
+            // Ban Check 
             if (isBanned(nick)) {
                 const banTime = bannedUsers.get(nick);
                 const remainingMinutes = Math.ceil((banTime - Date.now()) / (60 * 1000));
@@ -166,7 +155,7 @@ wsss.on('connection', wss => {
                 return;
             }
 
-            // 2. Mute Check
+            // Mute Check
             if (mutedUsers.has(lowerNick)) {
                 const wssInstance = Array.from(clients.entries()).find(([w, n]) => n === nick)?.[0];
                 if (wssInstance) {
@@ -175,7 +164,7 @@ wsss.on('connection', wss => {
                 return;
             }
             
-            // 3. FREEZE CHECK (Blocks all non-admin users)
+            // FREEZE CHECK
             if (isChatFrozen && lowerNick !== "nimda") {
                 const wssInstance = Array.from(clients.entries()).find(([w, n]) => n === nick)?.[0];
                 if (wssInstance) {
@@ -184,7 +173,7 @@ wsss.on('connection', wss => {
                 return;
             }
 
-            // 4. Auto-ban check for bad words
+            // Auto-ban check
             if (badWords.some(bw => text.toLowerCase().includes(bw))) {
                 sendAction(nick, "ban", 35);
                 broadcastChat("SYSTEM", `User ${nick} was auto-banned for using prohibited language.`);
@@ -197,7 +186,6 @@ wsss.on('connection', wss => {
                 const cmd = parts[0];
                 const target = parts.length > 1 ? parts[1] : null; 
 
-                // /freeze and /unfreeze
                 if (cmd === "/freeze" || cmd === "/unfreeze") {
                     const action = cmd.substring(1); 
                     const newsstate = action === "freeze";
@@ -209,7 +197,6 @@ wsss.on('connection', wss => {
                         broadcastChat("SYSTEM", `Admin has ${isChatFrozen ? 'FROZEN' : 'UNFROZEN'} the chat.`);
                     }
                 }
-                // /ban
                 else if (cmd === "/ban" && target) {
                     if(sendAction(target, "ban", 35)) {
                         broadcastChat("SYSTEM", `Admin banned ${target} for 35 minutes.`);
@@ -217,7 +204,6 @@ wsss.on('connection', wss => {
                         broadcastChat("SYSTEM", `User ${target} not found.`);
                     }
                 }
-                // /kick
                 else if (cmd === "/kick" && target) {
                     if(sendAction(target, "kick", 5)) {
                         broadcastChat("SYSTEM", `Admin kicked ${target} for 5 minutes.`);
@@ -225,7 +211,6 @@ wsss.on('connection', wss => {
                         broadcastChat("SYSTEM", `User ${target} not found.`);
                     }
                 }
-                // /rename
                 else if (cmd === "/rename" && target && parts.length > 2) {
                     const newNick = parts[2];
                     let renamed = false;
@@ -244,7 +229,6 @@ wsss.on('connection', wss => {
                         broadcastChat("SYSTEM", `User ${target} not found for rename.`);
                     }
                 }
-                // /mute
                 else if (cmd === "/mute" && target) {
                     const lowerTarget = target.toLowerCase();
                     if (mutedUsers.has(lowerTarget)) {
@@ -254,28 +238,24 @@ wsss.on('connection', wss => {
                         broadcastChat("SYSTEM", `Admin muted ${target}.`);
                     }
                 }
-                // /unmute (NEW EXPLICIT COMMAND)
                 else if (cmd === "/unmute" && target) {
                     const lowerTarget = target.toLowerCase();
-                    if (mutedUsers.delete(lowerTarget)) { // delete returns true if the element existed
+                    if (mutedUsers.delete(lowerTarget)) { 
                         broadcastChat("SYSTEM", `Admin unmuted ${target}.`);
                     } else {
                         broadcastChat("SYSTEM", `User ${target} is not currently muted.`);
                     }
                 }
-                // /highlight
                 else if (cmd === "/highlight" && parts.length > 1) {
                     const highlightText = parts.slice(1).join(" ");
                     const highlightData = JSON.stringify({ type: "highlight", text: highlightText });
                     wsss.clients.forEach(c => { if (c.readyState === c.OPEN) c.send(highlightData); });
                 }
-                // /clear
                 else if (cmd === "/clear") {
                     const clearData = JSON.stringify({ type: "clear" });
                     wsss.clients.forEach(c => { if (c.readyState === c.OPEN) c.send(clearData); });
                     broadcastChat("SYSTEM", `Admin cleared the chat history for everyone.`);
                 }
-                // /unban (manual removal of persistent ban)
                 else if (cmd === "/unban" && target) { 
                     if (bannedUsers.delete(target)) {
                         saveBans();
@@ -288,10 +268,10 @@ wsss.on('connection', wss => {
                     broadcastChat("SYSTEM", `Admin command error: Unknown command or missing arguments for ${cmd}.`);
                 }
                 
-                return; // Stop processing after an admin command
+                return;
             }
 
-            // 5. Regular chat broadcast
+            // Regular chat broadcast
             broadcastChat(nick, text);
         }
     });
@@ -301,7 +281,7 @@ wsss.on('connection', wss => {
         clients.delete(wss);
         if (closedNick) {
              broadcastChat("SYSTEM", `${closedNick} has left the chat.`);
-             mutedUsers.delete(closedNick.toLowerCase()); // Remove from mute list if they leave
+             mutedUsers.delete(closedNick.toLowerCase()); 
         }
         broadcastUsers();
     });
