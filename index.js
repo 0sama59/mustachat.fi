@@ -8,11 +8,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BANS_FILE = 'bans.json'; 
 
-// Serve static files (like index.html, script.js, style.css) from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public'))); 
+// FIX: Use simple path 'public' for static files, which is more reliable on Render
+app.use(express.static('public')); 
 
 // Start the HTTP server
-const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); // Changed log message
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Initialize WebSocket Server on the same HTTP server
 const wsss = new WebSocketServer({ server });
