@@ -1,15 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // FIX: Using wss is correct for Render. We will use location.host dynamically.
+    // FIX 1: Use wss:// protocol for Render deployment
     const wss = new WebSocket(`wss://${location.host}`);
 
     const messagesDiv = document.getElementById("messages");
-    // --- FIX 1: Correct ID for User List ---
+    // FIX 2: Correct ID for User List
     const usersDiv = document.getElementById("active-users"); 
     
     const nameInput = document.getElementById("nameInput");
     const msgInput = document.getElementById("msgInput");
     const sendBtn = document.getElementById("sendBtn");
-    // --- FIX 2: Correct ID for Suggestions ---
+    // FIX 3: Correct ID for Suggestions
     const suggestionsDiv = document.getElementById("suggestions");
 
     // Updated list to show explicit /mute and /unmute commands
