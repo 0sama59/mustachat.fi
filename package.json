@@ -1,0 +1,12 @@
+{
+  "name": "chat-room",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "wss": "^8.18.3"
+  }
+}

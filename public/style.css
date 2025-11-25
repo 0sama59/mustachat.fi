@@ -1,0 +1,197 @@
+body {
+    margin: 0;
+    background: #0d1117;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    padding: 20px; 
+}
+
+/* Container */
+.chat-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center; 
+    max-width: 900px;
+    margin: auto;
+}
+
+/* Chat Box */
+.chat-box {
+    width: 600px;
+    max-width: 100%;
+    height: 600px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+}
+
+/* Messages container */
+#messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+/* Base style for all user chat messages */
+#messages > div.message {
+    background: #282c34; /* Darker background for bubbles */
+    margin-bottom: 8px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    word-wrap: break-word; 
+    border-left: 3px solid #61afef; /* Light blue accent */
+}
+
+/* System Messages (Renames, Kicks, Bans, General Notifications) */
+.system {
+    color: #f39c12; /* Orange/Gold color */
+    font-style: italic;
+    text-align: center;
+    padding: 5px 0;
+    margin: 10px 0;
+    border-bottom: 1px dashed #f39c1255;
+    border-top: 1px dashed #f39c1255;
+    background: transparent !important; 
+    font-size: 0.9rem;
+}
+
+/* Admin Chat Message Bubble (Applied to Nimda's regular messages) */
+.adminMsg {
+    background: #ff4d4d !important; /* Brighter red background */
+    color: white;
+    font-weight: bold;
+    border: 3px solid #ff1a1a;
+    box-shadow: 0 0 15px #ff4d4d;
+    animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 8px #ff4d4d; }
+    to { box-shadow: 0 0 16px #ff8080; }
+}
+
+/* Highlighted Messages */
+.highlight {
+    background: #ffeb3b !important;
+    color: #000;
+    font-weight: bold;
+    border: 2px solid #ffc107;
+    text-align: center;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    text-transform: uppercase;
+}
+
+/* Input */
+.input-area {
+    display: flex;
+    padding: 15px;
+    background: #111;
+    border-top: 1px solid #333;
+}
+
+input {
+    padding: 12px;
+    background: #222;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+
+#nameInput {
+    width: 120px;
+    margin-right: 10px;
+}
+
+#msgInput {
+    flex: 1;
+    margin-right: 10px;
+}
+
+button {
+    padding: 12px;
+    width: 50px;
+    background: #3b82f6;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-size: 1.2rem;
+}
+
+button:hover {
+    background: #2563eb;
+}
+button:active {
+    transform: scale(0.98);
+}
+
+
+/* Suggestions */
+.suggestions {
+    background: #222;
+    color: #fff;
+    padding: 5px 15px;
+    font-size: 0.8rem;
+    border-top: 1px solid #444;
+    display: none;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.suggestions div {
+    margin: 3px 0;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background 0.1s;
+}
+
+.suggestions div:hover {
+    background: #555;
+}
+
+/* Users */
+.user-list {
+    width: 200px;
+    max-width: 100%;
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 15px;
+    height: 600px;
+    overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+}
+
+.user-list h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    color: #3b82f6;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 5px;
+}
+
+.user-list div {
+    padding: 5px 0;
+    color: #bbb;
+}
+
+/* Special styling for the admin in the user list */
+.user-list .admin-user {
+    color: #ff4d4d; /* Red for ADMIN */
+    font-weight: bold;
+}
